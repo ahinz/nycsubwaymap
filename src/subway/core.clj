@@ -84,27 +84,20 @@
 ;
 ; Frame list is a list of tuples
 ; (frame, distance)
-(defn generate-frames 
-  ([reference-points]
-     (generate-frames
-      (first reference-points)
-      (rest reference-points)
-      []))
+(defn generate-frames [reference-points]
+  (reduce 
+   (fn [pts [last-ref next-ref]]
+     (let [start-frame (:frame last-ref)
+           end-frame (:frame next-ref)
+           start-dist (:dist last-ref)
+           delta-distance (- (:dist next-ref) start-dist)
+           delta-frame (- end-frame start-frame)
+           dist-per-frame (/ delta-distance delta-frame)
 
-  ([last-ref reference-points pts]
-     (if (and last-ref (not (empty? reference-points)))
-       (let [next-ref (first reference-points)
-             zzz (println next-ref last-ref)
-             start-frame (:frame last-ref)
-             end-frame (:frame next-ref)
-             start-dist (:dist last-ref)
-             delta-distance (- (:dist next-ref) start-dist)
-             delta-frame (- end-frame start-frame)
-             dist-per-frame (/ delta-distance delta-frame)
-
-             new-dists (map #(* dist-per-frame %) (range 0 (- end-frame start-frame)))
-             new-pairs (map-indexed 
-                        (fn [i d] {:frame (+ i start-frame) :dist (+ d start-dist)})
-                        new-dists)]
-         (recur next-ref (rest reference-points) (concat pts new-pairs)))
-       pts)))
+           new-dists (map #(* dist-per-frame %) (range 0 (- end-frame start-frame)))
+           new-pairs (map-indexed 
+                      (fn [i d] {:frame (+ i start-frame) :dist (+ d start-dist)})
+                      new-dists)]
+       (concat pts new-pairs)))
+   []
+   (partition 2 1 reference-points)))
