@@ -1,6 +1,17 @@
 (ns subway.core-test
   (:use clojure.test
-        subway.core))
+        subway.core
+        subway.geo))
+
+(deftest geo
+  (testing "coord transforms"
+    (is
+     (= (map int (to-webm 45.2 -82.1))
+        [-9139330 5653062]))
+
+    (is
+     (= (map #(int (* 100 %)) (to-latlng -9139330 5653062))
+        [4519 -8209]))))
 
 (deftest interp
   (testing "interpolate since segment"
