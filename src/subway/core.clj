@@ -1,5 +1,7 @@
 (ns subway.core)
 
+; 7 line: http://www.youtube.com/watch?v=cmaLggM73a0
+
 (defrecord Point [x y])
 (defn point [x y] (Point. x y))
 (defn x [p] (.x p))
@@ -11,8 +13,9 @@
   (+ (* (.m line) x) (.b line)))
 
 (defn sqr [x] (* x x))
-(defn point-to-point-dist [p1 p2]
+(defn point-to-point-dist 
   "Distance between p1 and p2"
+  [p1 p2]
   (Math/sqrt (+ (sqr (- (x p1) (x p2)))
                 (sqr (- (y p1) (y p2))))))
 
@@ -24,9 +27,10 @@
         d (point-to-point-dist p1 p2)]
    (LineSegment. p1 p2 (line m b) d)))
 
-(defn lines-intersection [l1 l2]
+(defn lines-intersection
   "Determine the intersection point between two lines. 
    If the lines are parallel, this method returns 'false'"
+  [l1 l2]
   ;; (1) y = m1*x + b1 (2) y = m2*x + b2
   ;; m1*x + b1 = m2*x + b2 => x = (b2 - b1)/(m1 - m2)
   (if (= (:m l1) (:m l2))
@@ -36,8 +40,9 @@
           y (+ (* (:m l1) x) (:b l1))]
       (point x y))))
 
-(defn point-to-line-intersection-pt [p l]
+(defn point-to-line-intersection-pt
   "Given a point (p) and a line (l) return a point on l such that l and p are colinear"
+  [p l]
   (let [;; First find a line l' that is perpendicular to
         ;; l and goes through the point p
         ;; Line must satisfy:
@@ -50,12 +55,14 @@
         l' (line m' b')]
     (lines-intersection l l')))
 
-(defn point-on-line? [p l]
+(defn point-on-line?
   "Returns true if p is on the line l"
+  [p l]
   (= (eval-line l (:x p)) (:y p)))
 
-(defn point-on-line-segment? [p ls]
+(defn point-on-line-segment?
   "Returns true if p is on the line segment ls"
+  [p ls]
   (let [x (:x p)
         y (:y p)
 
@@ -74,19 +81,21 @@
      (and (>= y ymin) (>= x xmin)
           (<= y ymax) (<= x xmax)))))
 
-(defn point-to-line-seg-dist [p ls]
+(defn point-to-line-seg-dist
   "Get the distance from a point to a line segment. 
    If the closest point on the line segment is an end point return false"
+  [p ls]
   (let [ipt (point-to-line-intersection-pt p (:line ls))]
     (if (point-on-line-segment? ipt ls)
       (point-to-point-dist p ipt)
       false)))
 
-(defn generate-frames [reference-points]
+(defn generate-frames
   "Given a list of reference points:
   [{:frame f1 :dist d1}, {:frame f2 :dist d2}, ..., {:frame fN :dist dN}]
 
   Interpolate all integer frames from f1 to fN using the given distances"
+  [reference-points]
   (reduce 
    (fn [pts [last-ref next-ref]]
      (let [start-frame (:frame last-ref)
@@ -104,10 +113,11 @@
    []
    (partition 2 1 reference-points)))
 
-(defn interpolate-distance-on-line-segment [d ls]
+(defn interpolate-distance-on-line-segment
   "Given a line segment from p1 to p2 and a distance between 0 and distance(p1,p2), return
    the point on the line segment d away from p1. If d > distance(p1,p2), return p1. If d < 0
    return p1"
+  [d ls]
   (cond
    (>= d (:dist ls))
    (:p2 ls)
@@ -154,10 +164,11 @@
         (+ cur-dist (:dist (first segs)))
         points)))))
 
-(defn linear-distance-to-points [line-segments distances]
+(defn linear-distance-to-points
   "Given a list of line segments and a list of distances corresponding to distance
    from the first point in the line segment list, return interpolated locations
    for each distance. Distances must be sorted."
+  [line-segments distances]
   (-linear-distance-to-points line-segments distances 0.0 []))
 
 
