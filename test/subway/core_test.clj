@@ -2,6 +2,44 @@
   (:use clojure.test
         subway.core))
 
+(deftest interp
+  (testing "interpolate since segment"
+    (is
+     (= (interpolate-distance-on-line-segment
+         5.0
+         (line-segment (point 0 0) (point 10 0)))
+        (point 5.0 0.0)))
+
+    (def p1 (interpolate-distance-on-line-segment
+            5.0
+            (line-segment (point 5 0) (point 20 30))))
+
+    (def p2 (interpolate-distance-on-line-segment
+            -2.0
+            (line-segment (point 5 0) (point 20 30))))
+
+    (def p3 (interpolate-distance-on-line-segment
+            50.0
+            (line-segment (point 5 0) (point 20 30))))
+    (is 
+     (= {:x (int (* 10000 (:x p1))) :y (int (* 10000 (:y p1)))}
+        {:x 72360, :y 44721}))
+    
+    (is p2 (point 5 0))
+    (is p3 (point 20 30)))
+
+  (testing "bulk distances"
+
+    ; Not a great test, but easy to reason about
+    (def segs [(line-segment (point 0.0 0.0) (point 10.0 0.0))
+               (line-segment (point 10.0 0.0) (point 20.0 20.0))])
+    (def dists [0 3 6 9 10 (+ 10 (/ (Math/sqrt 500) 2)) (+ 10 (Math/sqrt 500))])
+
+    (is
+     (= (linear-distance-to-points segs dists)
+        [(point 0.0 0.0) (point 3.0 0.0) (point 6.0 0.0) (point 9.0 0.0)
+         (point 10.0 0.0) (point 15.0 10.0) (point 20.0 20.0)]))))
+
 (deftest frame
   (testing "generating frames"
     (defn fd [f d] {:frame f :dist d})
@@ -24,14 +62,14 @@
     (is (= (lines-intersection (line -13.0 60.0) (line 13.0 -70.0)) (point 5.0 -5.0))))
 
   (testing "point on line"
-    (is (= (point-on-line (point 9.0 23.0) (line 2.0 5.0)) true))
-    (is (= (point-on-line (point 12.0 29.0) (line 2.0 5.0)) true))
-    (is (= (point-on-line (point 9.0 24.0) (line 2.0 5.0)) false)))
+    (is (= (point-on-line? (point 9.0 23.0) (line 2.0 5.0)) true))
+    (is (= (point-on-line? (point 12.0 29.0) (line 2.0 5.0)) true))
+    (is (= (point-on-line? (point 9.0 24.0) (line 2.0 5.0)) false)))
 
   (testing "point on line segment"
-    (is (= (point-on-line-segment (point 9.0 23.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) true))
-    (is (= (point-on-line-segment (point 12.0 29.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) false))
-    (is (= (point-on-line-segment (point 9.0 24.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) false)))
+    (is (= (point-on-line-segment? (point 9.0 23.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) true))
+    (is (= (point-on-line-segment? (point 12.0 29.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) false))
+    (is (= (point-on-line-segment? (point 9.0 24.0) (line-segment (point 0.0 5.0) (point 11.0 27.0))) false)))
 
   (testing "Simple lines"
     (def l1 (line 1.0 1.0))
