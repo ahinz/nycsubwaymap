@@ -1,6 +1,5 @@
 (ns subway.core)
 
-;; Datetype line
 (defrecord Point [x y])
 (defn point [x y] (Point. x y))
 (defn x [p] (.x p))
