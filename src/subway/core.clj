@@ -11,18 +11,18 @@
 (defn eval-line [line x]
   (+ (* (.m line) x) (.b line)))
 
-(defrecord LineSegment [p1 p2 line])
-(defn line-segment [p1 p2]
-  (let [m (/ (- (:y p1) (:y p2))
-             (- (:x p1) (:x p2)))
-        b (- (:y p1) (* m (:x p1)))]
-   (LineSegment. p1 p2 (line m b))))
-
-
 (defn sqr [x] (* x x))
 (defn point-to-point-dist [p1 p2]
   (Math/sqrt (+ (sqr (- (x p1) (x p2)))
                 (sqr (- (y p1) (y p2))))))
+
+(defrecord LineSegment [p1 p2 line dist])
+(defn line-segment [p1 p2]
+  (let [m (/ (- (:y p1) (:y p2))
+             (- (:x p1) (:x p2)))
+        b (- (:y p1) (* m (:x p1)))
+        d (point-to-point-dist p1 p2)]
+   (LineSegment. p1 p2 (line m b) d)))
 
 (defn lines-intersection [l1 l2]
   ;; (1) y = m1*x + b1 (2) y = m2*x + b2
@@ -67,6 +67,44 @@
      (and (>= y ymin) (>= x xmin)
           (<= y ymax) (<= x xmax)))))
 
-;; (defn point-to-line-seg-dist [p ls]
-;;   (let [ipt (point-to-line-intersection-pt p (:line ls))
-;;         ]))
+(defn point-to-line-seg-dist [p ls]
+  (let [ipt (point-to-line-intersection-pt p (:line ls))]
+    (if (point-on-line-segment ipt ls)
+      (point-to-point-dist p ipt)
+      false)))
+
+; Things we know:
+; frame, distance pairs:
+; P = [(f0,d0), (f1,d1), (f2,d2), ...]
+; Target output:
+; list matching frame to x,y
+; First we assign each frame a *distance*
+;; Distance Interval:
+;; type: { :distance | :clear }
+;
+; Frame list is a list of tuples
+; (frame, distance)
+(defn generate-frames 
+  ([reference-points]
+     (generate-frames
+      (first reference-points)
+      (rest reference-points)
+      []))
+
+  ([last-ref reference-points pts]
+     (if (and last-ref (not (empty? reference-points)))
+       (let [next-ref (first reference-points)
+             zzz (println next-ref last-ref)
+             start-frame (:frame last-ref)
+             end-frame (:frame next-ref)
+             start-dist (:dist last-ref)
+             delta-distance (- (:dist next-ref) start-dist)
+             delta-frame (- end-frame start-frame)
+             dist-per-frame (/ delta-distance delta-frame)
+
+             new-dists (map #(* dist-per-frame %) (range 0 (- end-frame start-frame)))
+             new-pairs (map-indexed 
+                        (fn [i d] {:frame (+ i start-frame) :dist (+ d start-dist)})
+                        new-dists)]
+         (recur next-ref (rest reference-points) (concat pts new-pairs)))
+       pts)))
