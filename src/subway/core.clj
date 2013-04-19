@@ -1,4 +1,6 @@
-(ns subway.core)
+(ns subway.core
+  (:require
+   [subway.dao :as dao]))
 
 ; 7 line: http://www.youtube.com/watch?v=cmaLggM73a0
 
@@ -7,8 +9,9 @@
 (defn x [p] (.x p))
 (defn y [p] (.y p))
 
-(defrecord Line [m b])
-(defn line [m b] (Line. m b))
+(defrecord Line [m b is-vert vert])
+(defn line [m b] (Line. m b false nil))
+(defn vertical-line [x] (Line. "m" "b" true x))
 (defn eval-line [line x]
   (+ (* (.m line) x) (.b line)))
 
@@ -20,12 +23,25 @@
                 (sqr (- (y p1) (y p2))))))
 
 (defrecord LineSegment [p1 p2 line dist])
-(defn line-segment [p1 p2]
-  (let [m (/ (- (:y p1) (:y p2))
-             (- (:x p1) (:x p2)))
-        b (- (:y p1) (* m (:x p1)))
-        d (point-to-point-dist p1 p2)]
-   (LineSegment. p1 p2 (line m b) d)))
+
+(defn- line-segment-from-points [p1 p2]
+  (if (= (:x p1) (:x p2))
+    (LineSegment. p1 p2 (vertical-line (:x p1)) (Math/abs (- (:y p1) (:y p2))))
+   (let [m (/ (- (:y p1) (:y p2))
+              (- (:x p1) (:x p2)))
+         b (- (:y p1) (* m (:x p1)))
+         d (point-to-point-dist p1 p2)]
+     (LineSegment. p1 p2 (line m b) d))))
+
+(defn- line-segment-from-pairs [[x1 y1] [x2 y2]]
+  (line-segment-from-points (point x1 y1) (point x2 y2)))
+
+(defn line-segment
+  "Create a line segment from two points or two pairs of vectors"
+  [p1 p2]
+  (if (and (instance? Point p1) (instance? Point p2))
+    (line-segment-from-points p1 p2)
+    (line-segment-from-pairs p1 p2)))
 
 (defn lines-intersection
   "Determine the intersection point between two lines. 
@@ -171,4 +187,16 @@
   [line-segments distances]
   (-linear-distance-to-points line-segments distances 0.0 []))
 
+(defn points-to-line-segments
+  "Given a set of points [p0,p1,...,pN] create a seq of line segments: [p0p1,p1p2,p2p3,...,p(N-1)pN]"
+  [points]
+  (map (partial apply line-segment) (partition 2 1 points)))
 
+(defn frame-refs-to-points
+  "Convert a seq of FrameReference into a hash with {frame,dist,lat,lng} based on a point set"
+  [points refs]
+  (map (fn [orig new] (assoc orig :lat (:y new) :lng (:x new)))
+       refs
+       (linear-distance-to-points
+        (points-to-line-segments points)
+        (map #(:distance %) refs))))
