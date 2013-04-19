@@ -1,6 +1,8 @@
 (ns subway.geo)
 
-(defn load-nycs-shape [line]
+(defn load-nycs-shape 
+  "Get a list of (lat,lng) pairs for a given NYCS route"
+  [line]
   (map (fn [line]
          (map #(java.lang.Double/parseDouble %)
               (butlast (rest (.split line ","))))) 
@@ -29,3 +31,9 @@
              (* 2.0 (Math/atan (Math/exp (* d2r (/ y origin-shift)))))
              (/ Math/PI 2.0)))
      (/ x origin-shift)]))
+
+(defn pt-to-latlng
+  "Convert a point in web mercator into geographic coords as as {lat,lng} dict"
+  [pt]
+  (let [[lat lng] (to-latlng (:x pt) (:y pt))]
+    {:lat lat :lng lng}))
