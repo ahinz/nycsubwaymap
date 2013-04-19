@@ -10,6 +10,9 @@ var app = (function(L,B,_) {
     app.rt.views = {};
     app.rt.models = {};
 
+    // Current frame of the player
+    app.rt.models.frame = new B.Model({'frame': 0});
+
     app.models.FrameRef = B.Model.extend({
         frame: 0, 
         distance: 0, 
@@ -29,6 +32,19 @@ var app = (function(L,B,_) {
             return new B.Model({'lat': m[0], 'lng': m[1]});
         },
         url: '/shape'
+    });
+
+    app.views.FrameViewer = Backbone.View.extend({
+        tagName: 'div',
+        className: 'user-defined-frames',
+
+        initialize: function() {
+            this.listenTo(this.model, "change", this.render);
+        },
+
+        render: function() {
+            this.$el.html('Frame: ' + this.model.get('frame'));
+        }
     });
 
     app.views.RouteLineView = Backbone.View.extend({
@@ -139,11 +155,40 @@ var app = (function(L,B,_) {
         $("#userlist").append(app.rt.views.userFrames.el);
 
         app.rt.models.userFrames.fetch();
+
+        app.rt.views.frameView = new app.views.FrameViewer({'model': app.rt.models.frame});
+
+        $("#curframe").append(app.rt.views.frameView.el);
     }
 
     app.init = init;
 
+    app.ytInit = function() {
+        app.yt = {};
+        app.yt.onPlayerReady = function(event) {
+            var player = event.target;
+            var updateFn = function() {               
+                app.rt.models.frame.set('frame', Math.floor(player.getCurrentTime() * 24.0));
+                setTimeout(updateFn, 40);
+            };
+
+            updateFn();
+        };
+        app.yt.onPlayerStateChange = function() {};
+
+        app.rt.player = new YT.Player('player', {
+            height: '350',
+            width: '350',
+            videoId: 'cmaLggM73a0',
+            events: {
+                'onReady': app.yt.onPlayerReady,
+                'onStateChange': app.yt.onPlayerStateChange
+            }
+        });
+    }
+
     return app;
 }(L,Backbone,_))
 
+onYouTubeIframeAPIReady = app.ytInit;
 $(app.init);
