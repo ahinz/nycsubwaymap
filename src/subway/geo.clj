@@ -1,5 +1,13 @@
 (ns subway.geo)
 
+(defn load-nycs-shape [line]
+  (map (fn [line]
+         (map #(java.lang.Double/parseDouble %)
+              (butlast (rest (.split line ","))))) 
+       (.split
+        (slurp (.getFile (clojure.java.io/resource "shapes/nycs_7.txt")))
+        "\r\n")))
+
 (defn to-webm
   "Convert an (lat,lng) pair in geographic coords (EPSG4326) to web mercator"
   [lat lng]

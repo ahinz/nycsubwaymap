@@ -1,6 +1,7 @@
 (ns subway.routes
   (:use compojure.core)
   (:require 
+   [subway.geo :as geo]
    [subway.dao :as dao]
    [subway.core :as core]
    [compojure.route :as route]
@@ -18,6 +19,7 @@
 
 (defroutes main-routes
   (GET "/references" [] (get-references))
+  (GET "/shape" [] (json-resp (geo/load-nycs-shape "7")))
   (route/resources "/")
   (route/not-found "Page not found"))
 
