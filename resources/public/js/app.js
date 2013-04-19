@@ -99,7 +99,7 @@ var app = (function(L,B,_) {
     });
 
     app.views.UserDefinedFramesView = Backbone.View.extend({
-        tagName: 'ul',
+        tagName: 'div',
 
         className: 'user-defined-frames',
 
@@ -123,16 +123,23 @@ var app = (function(L,B,_) {
         },
 
         newRec: function() {
-
+            // Promote 'selectedFrameRef' to a real frame ref!
+            var model = app.rt.models.selectedFrame.clone();
+            
+            this.collection.add(model);
+            model.save();
         },
 
         render: function() {
             this.$el.empty();
-
+            this.$el.append('<div class="button new">Add</div>');
+            
             var that = this;
-            this.$el = this.collection.reduce(function($el, model) {
+            var div = this.collection.reduce(function($el, model) {
                 return $el.append(that.template(model.attributes));
-            }, this.$el);
+            }, $('<ol></ol>'));
+
+            this.$el.append(div);
         }
     });                                 
 
