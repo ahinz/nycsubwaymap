@@ -195,7 +195,7 @@
 (defn frame-refs-to-points
   "Convert a seq of FrameReference into a hash with {frame,dist,lat,lng} based on a point set"
   [points refs]
-  (map (fn [orig new] (assoc orig :lat (:y new) :lng (:x new)))
+  (map #(assoc %1 :pt %2)
        refs
        (linear-distance-to-points
         (points-to-line-segments points)

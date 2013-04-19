@@ -15,7 +15,11 @@
    :body (json/write-str data)})
 
 (defn get-references []
-  (json-resp (dao/get-frame-refs)))
+  (json-resp 
+   (map #(update-in % [:pt] geo/pt-to-latlng)  
+        (core/frame-refs-to-points
+         (map (partial apply geo/to-webm) (geo/load-nycs-shape "7"))
+         (dao/get-frame-refs)))))
 
 (defroutes main-routes
   (GET "/references" [] (get-references))
