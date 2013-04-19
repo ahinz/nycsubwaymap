@@ -59,22 +59,35 @@
 (defn point-to-line-intersection-pt
   "Given a point (p) and a line (l) return a point on l such that l and p are colinear"
   [p l]
-  (let [;; First find a line l' that is perpendicular to
-        ;; l and goes through the point p
-        ;; Line must satisfy:
-        ;; p=(x,y) ; y=m'(x) + b => b = y - m'(x)
-        ;; l=(m,b) ; m'=-1/m
+  (cond
+   (= 0.0 (.m l))
+   (point (:x p) (.b l))
 
-        m' (- (/ 1 (.m l)))
+   (:is-vert l)
+   (point (:vert l) (:y p))
 
-        b' (- (y p) (* m' (x p)))
-        l' (line m' b')]
-    (lines-intersection l l')))
+   :else
+   (let [;; First find a line l' that is perpendicular to
+         ;; l and goes through the point p
+         ;; Line must satisfy:
+         ;; p=(x,y) ; y=m'(x) + b => b = y - m'(x)
+         ;; l=(m,b) ; m'=-1/m
+
+         m' (- (/ 1 (.m l)))
+
+         b' (- (y p) (* m' (x p)))
+         l' (line m' b')]
+     (lines-intersection l l'))))
+
+(defn- close-enough [a b]
+  (< (Math/abs (- a b)) 0.00001)) ; Should be fine since we're working with meters
 
 (defn point-on-line?
   "Returns true if p is on the line l"
   [p l]
-  (= (eval-line l (:x p)) (:y p)))
+  (if (:is-vert l)
+    (close-enough (:x p) (:vert l))   
+    (close-enough (eval-line l (:x p)) (:y p))))
 
 (defn point-on-line-segment?
   "Returns true if p is on the line segment ls"

@@ -10,14 +10,22 @@ var app = (function(L,B,_) {
     app.rt.views = {};
     app.rt.models = {};
 
-    // Current frame of the player
-    app.rt.models.frame = new B.Model({'frame': 0});
-
     app.models.FrameRef = B.Model.extend({
         frame: 0, 
         distance: 0, 
         pt: {lat: 0, lng:0}
     });
+
+    // The global frame ref represents the location
+    // of a given frame at any given time
+    app.rt.models.frame = new app.models.FrameRef({'frame': 0});
+
+    // The selected frame ref represents a given frame, distance
+    // and position tuple once selected. The general workflow is
+    // to promote this to the saved list once the user says it is
+    // golden
+    app.rt.models.selectedFrame = new app.models.FrameRef({});
+
 
     app.models.FrameRefs = B.Collection.extend({
         model: app.models.FrameRef,
@@ -128,8 +136,31 @@ var app = (function(L,B,_) {
         }
     });                                 
 
+    app.createMapClickHandler = function(frameModel, selectModel) {
+        return function(e) {
+            var frame = frameModel.get('frame');
+            $.ajax('/snap-to-route',
+                   {
+                       data: {
+                           'lat': e.latlng.lat,
+                           'lng': e.latlng.lng
+                       }
+                   }).done(function(ll) {
+                       app.rt.map.addLayer(L.marker(new L.LatLng(ll.pt.lat,ll.pt.lng)));
+                       ll.frame = frame;
+                       selectModel.set(ll);
+                   });
+        };
+    };
+        
+
     function init() {        
         app.rt.map = L.map('map').setView([40.767, -74.01], 13);
+
+        app.rt.map.on('click', 
+                      app.createMapClickHandler(
+                          app.rt.models.frame,
+                          app.rt.models.selectedFrame));
 
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
