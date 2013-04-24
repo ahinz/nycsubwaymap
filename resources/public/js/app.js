@@ -217,7 +217,7 @@ var app = (function(L,B,_) {
         app.rt.player = new YT.Player('player', {
             height: '350',
             width: '350',
-            videoId: 'cmaLggM73a0',
+            videoId: 'cg-9dklvPlE',
             events: {
                 'onReady': app.yt.onPlayerReady,
                 'onStateChange': app.yt.onPlayerStateChange

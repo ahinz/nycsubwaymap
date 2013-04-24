@@ -10,6 +10,11 @@
    :subname *db-name*})
 
 (defrecord FrameReference [id frame distance])
+(defn create-frame-ref
+  "Create a new reference frame that links a given frame to the linear
+   distance on a route"
+  [frame distance]
+  (FrameReference. nil frame distance))
 
 (defn- create-schema
   "Create the baseline schema"
@@ -30,17 +35,16 @@
 (defn insert-or-update-frameref
   "Insert a frame reference if the id is nil, otherwise do an update"
   [fref]
-  (j/with-connection (sqlite-db)
-    (if (nil? (:id fref))
-      (j/insert-record
-       :refs
-       {:frame (:frame fref) 
-        :distance (:distance fref)})
-      (j/update-values
-       :refs
-       ["id=?" (:id fref)]
-       {:frame (:frame fref) 
-        :distance (:distance fref)}))))
+  (if (nil? (:id fref))
+    (j/insert! (sqlite-db)
+               :refs
+               {:frame (:frame fref) 
+                :distance (:distance fref)})
+    (j/update! (sqlite-db)
+     :refs
+     ["id=?" (:id fref)]
+     {:frame (:frame fref) 
+      :distance (:distance fref)})))
 
 (defn get-frame-refs
   "Get a list of all framerefs ordered by distance"

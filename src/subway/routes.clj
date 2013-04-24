@@ -55,6 +55,10 @@
 
 (defroutes main-routes
   (GET "/references" [] (get-references))
+  (POST "/references" {body :body} (let [data (json/read-str (slurp body))
+                                         fref (dao/create-frame-ref 
+                                               (get data "frame") (get data "distance"))]
+                                     (dao/insert-or-update-frameref fref)))
   (GET "/snap-to-route" {params :params} (snap-to-route (java.lang.Double/parseDouble (:lat params))
                                                         (java.lang.Double/parseDouble (:lng params))))
   (GET "/shape" [] (json-resp (geo/load-nycs-shape "7")))
