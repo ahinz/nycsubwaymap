@@ -45,10 +45,8 @@
           segs)
          ipt (core/point-to-line-intersection-pt p (:line smallest-seg))
          path (take-while #(not (= smallest-seg %)) segs)
-         upto-dist (reduce + (map #(:dist %) (butlast path)))
-         seg-dist (Math/min
-                   (core/point-to-point-dist (:p1 smallest-seg) ipt)
-                   (core/point-to-point-dist (:p2 smallest-seg) ipt))
+         upto-dist (reduce + (map #(:dist %) path))
+         seg-dist (core/point-to-point-dist (:p1 smallest-seg) ipt)
          total-dist (+ upto-dist seg-dist)]
      {:pt (geo/pt-to-latlng ipt)
       :distance total-dist})))
