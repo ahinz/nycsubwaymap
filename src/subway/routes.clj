@@ -25,6 +25,36 @@
          (map (partial apply geo/to-webm) (geo/load-nycs-shape "7"))
          (dao/get-frame-refs)))))
 
+(defn expand-to-frames
+  "Given two frame refs (f1,d1) to (f2,d2) return a list
+   of length |f2-f1| where each entry corresponds to a frame/distance"
+  [ref1 ref2]
+  (let [f1 (:frame ref1)
+        f2 (:frame ref2)
+        d1 (:distance ref1)
+        d2 (:distance ref2)
+        step (/ (- d2 d1) (- f2 f1))]
+    (map #(+ d1 (* step %)) (range 0 (- f2 f1)))))
+
+(defn get-all-frames
+  "Get a list of all frames and the reference distance"
+  []
+  (let [segs 
+        (map #(apply core/line-segment %)
+             (partition 
+              2 1
+              (map 
+               (partial apply geo/to-webm)
+               (geo/load-nycs-shape "7"))))
+        frefs (dao/get-frame-refs)]
+    {:frames
+     (map #(geo/to-latlng (:x %) (:y %))
+          (core/linear-distance-to-points
+           segs
+           (mapcat #(apply expand-to-frames %)
+                   (partition 2 1 frefs))))
+     :start-frame (:frame (first frefs))}))
+
 (defn snap-to-route
   "Given a lat/lng pair, find the closest frameref"
   [lat lng]
@@ -60,6 +90,7 @@
   (GET "/snap-to-route" {params :params} (snap-to-route (java.lang.Double/parseDouble (:lat params))
                                                         (java.lang.Double/parseDouble (:lng params))))
   (GET "/shape" [] (json-resp (geo/load-nycs-shape "7")))
+  (GET "/frames" [] (json-resp (get-all-frames)))
   (route/resources "/")
   (route/not-found "Page not found"))
 

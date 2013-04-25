@@ -26,6 +26,11 @@ var app = (function(L,B,_) {
     // golden
     app.rt.models.selectedFrame = new app.models.FrameRef({});
 
+    // Interpolated frames
+    app.rt.models.interpFrames = new B.Model({});
+    app.rt.models.interpFrames.url = '/frames';
+    app.rt.models.interpFrames.fetch();
+
 
     app.models.FrameRefs = B.Collection.extend({
         model: app.models.FrameRef,
